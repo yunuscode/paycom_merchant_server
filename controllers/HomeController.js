@@ -6,6 +6,10 @@ module.exports = class HomeController {
 					HomeController.CheckPerformTransaction(req, res);
 					break;
 
+				case "CreateTransaction":
+					HomeController.CreateTransaction(req, res);
+					break;
+
 				default:
 					break;
 			}
@@ -20,26 +24,27 @@ module.exports = class HomeController {
 		 * Error codes: -31001 - Invalid amount; -31050 others
 		 */
 
-		let error = true;
+		res.error.invalidAmount(res);
 
-		if (error) {
-			res.status(200).json({
-				error: {
-					code: -31050,
-					message: {
-						ru: "Authorization invalid",
-						uz: "Authorization invalid",
-						en: "Authorization invalid",
-					},
-					data: "user_id",
-				},
-			});
-		} else {
-			res.json({
-				result: {
-					allow: true,
-				},
-			});
-		}
+		// res.json({
+		// 	result: {
+		// 		allow: true,
+		// 	},
+		// });
+	}
+
+	static async CreateTransaction(req, res) {
+		/**
+		 * Logic
+		 * Error codes: -31001 - Invalid amount; -31050 others
+		 */
+
+		res.error.invalidAmount(res);
+
+		// res.json({
+		// 	result: {
+		// 		allow: true,
+		// 	},
+		// });
 	}
 };

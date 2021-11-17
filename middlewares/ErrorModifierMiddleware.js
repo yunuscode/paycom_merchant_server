@@ -27,4 +27,21 @@ module.exports = function ErrorModifierMiddleware(req, res, next) {
 			},
 		});
 	};
+
+	error.cantDoOperation = function (res) {
+		res.status(200).json({
+			error: {
+				code: -31008,
+				message: {
+					ru: "Мы не можем сделать операцию",
+					uz: "Biz operatsiyani bajara olmaymiz",
+					en: "We can't do operation",
+				},
+				data: "user_id", // you can change it
+			},
+		});
+	};
+
+	res.error = error;
+	next();
 };
