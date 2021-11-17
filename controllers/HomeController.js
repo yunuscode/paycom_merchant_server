@@ -10,6 +10,10 @@ module.exports = class HomeController {
 					HomeController.CreateTransaction(req, res);
 					break;
 
+				case "CheckTransaction":
+					HomeController.CheckTransaction(req, res);
+					break;
+
 				default:
 					break;
 			}
@@ -20,31 +24,100 @@ module.exports = class HomeController {
 
 	static async CheckPerformTransaction(req, res) {
 		/**
-		 * Logic
-		 * Error codes: -31001 - Invalid amount; -31050 others
-		 */
+         * If you want to send error about invalid amount 
+		    res.error.invalidAmount(res);
+         * If you want to send error about invalid account
+            res.error.invalidAccount(res);
+         */
 
-		res.error.invalidAmount(res);
-
-		// res.json({
-		// 	result: {
-		// 		allow: true,
-		// 	},
-		// });
+		res.json({
+			result: {
+				allow: true,
+			},
+		});
 	}
 
 	static async CreateTransaction(req, res) {
+		try {
+			/**
+         * If you want to send error about invalid amount 
+		    res.error.invalidAmount(res);
+         * If you want to send error about invalid account
+            res.error.invalidAccount(res);
+         */
+
+			const user = await req.db.users.findOne({
+				where: {
+					user_phone: req.body.params.account.user_id,
+				},
+			});
+
+			if (!user) {
+				res.error.invalidAccount(res);
+				return;
+			}
+
+			let payment = await req.db.payments.findOne({
+				where: {
+					payment_id: req.body.params.id,
+				},
+			});
+
+			if (!payment) {
+				payment = await req.db.payments.create({
+					payment_id: req.body.params.id,
+					payment_state: req.body.params.state,
+					payment_amount: req.body.params.amount,
+					user_id: user.dataValues.user_id,
+				});
+			}
+
+			res.json({
+				result: {
+					create_time: new Date(
+						payment.dataValues.createdAt
+					).getTime(),
+					transaction: payment.dataValues.payment_id,
+					state: payment.dataValues.payment_state,
+				},
+			});
+		} catch (error) {
+			res.error.cantDoOperation(res);
+		}
+	}
+
+	static async CheckTransaction(req, res) {
 		/**
-		 * Logic
-		 * Error codes: -31001 - Invalid amount; -31050 others
-		 */
+         * If you want to send error about invalid transaction id 
+		    res.error.transactionNotFound(res);
+         */
 
-		res.error.invalidAmount(res);
+		const payment = await req.db.payments.findOne({
+			where: {
+				payment_id: req.body.params.id,
+			},
+		});
 
-		// res.json({
-		// 	result: {
-		// 		allow: true,
-		// 	},
-		// });
+		if (!payment) {
+			res.error.transactionNotFound(res);
+			return;
+		}
+
+		res.send({
+			result: {
+				create_time: new Date(payment.dataValues.createdAt).getTime(),
+				perform_time: payment.dataValues.payment_perform_time
+					? new Date(
+							payment.dataValues.payment_perform_time
+					  ).getTime()
+					: 0,
+				cancel_time: payment.dataValues.payment_cancel_time
+					? new Date(payment.dataValues.payment_cancel_time).getTime()
+					: 0,
+				transaction: payment.dataValues.payment_id,
+				state: payment.dataValues.payment_state,
+				reason: payment.dataValues.payment_reason,
+			},
+		});
 	}
 };
