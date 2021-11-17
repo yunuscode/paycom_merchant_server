@@ -23,6 +23,10 @@ async function pg() {
 		});
 		console.log(users);
 
+		// await db.users.create({
+		// 	user_phone: "998901515064",
+		// });
+
 		return db;
 	} catch (error) {
 		console.log("ERROR:", error);

@@ -55,6 +55,19 @@ module.exports = function ErrorModifierMiddleware(req, res, next) {
 		});
 	};
 
+	error.alreadyDone = function (res) {
+		res.status(200).json({
+			error: {
+				code: -31007,
+				message: {
+					ru: "Мы не можем сделать операцию",
+					uz: "Biz operatsiyani bajara olmaymiz",
+					en: "We can't do operation",
+				},
+			},
+		});
+	};
+
 	res.error = error;
 	next();
 };

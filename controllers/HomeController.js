@@ -16,6 +16,11 @@ module.exports = class HomeController {
 
 				case "PerformTransaction":
 					HomeController.PerformTransaction(req, res);
+					break;
+
+				case "CancelTransaction":
+					HomeController.CancelTransaction(req, res);
+					break;
 
 				default:
 					break;
@@ -176,6 +181,89 @@ module.exports = class HomeController {
 				perform_time: Date.now(),
 				state: 2,
 			});
+		}
+	}
+
+	static async CancelTransaction(req, res) {
+		const payment = await req.db.payments.findOne({
+			where: {
+				payment_id: req.body.params.id,
+			},
+			include: req.db.users,
+		});
+
+		if (!payment) {
+			res.error.transactionNotFound(res);
+			return;
+		}
+
+		if (payment.dataValues.payment_state !== 2) {
+			await req.db.payments.update(
+				{
+					payment_state: -1,
+					payment_cancel_time: Date.now(),
+					payment_reason: req.body.reason,
+				},
+				{
+					where: {
+						payment_id: payment.dataValues.payment_id,
+					},
+				}
+			);
+
+			res.json({
+				result: {
+					state: -1,
+					cancel_time: Date.now(),
+					transaction: payment.dataValues.payment_id,
+				},
+			});
+
+			return;
+		}
+
+		if (payment.dataValues.payment_state == 2) {
+			if (
+				payment.dataValues.user.dataValues.user_balance >
+				payment.dataValues.payment_amount
+			) {
+				await req.db.users.update(
+					{
+						user_balance: -payment.dataValues.payment_amount,
+					},
+					{
+						where: {
+							user_id: payment.dataValues.user.dataValues.user_id,
+						},
+					}
+				);
+
+				await req.db.payments.update(
+					{
+						payment_state: -2,
+						payment_cancel_time: Date.now(),
+						payment_reason: req.body.reason,
+					},
+					{
+						where: {
+							payment_id: payment.dataValues.payment_id,
+						},
+					}
+				);
+
+				res.json({
+					result: {
+						state: -2,
+						cancel_time: Date.now(),
+						transaction: payment.dataValues.payment_id,
+					},
+				});
+
+				return;
+			} else {
+				res.error.alreadyDone(res);
+				return;
+			}
 		}
 	}
 };
