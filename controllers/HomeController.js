@@ -14,6 +14,9 @@ module.exports = class HomeController {
 					HomeController.CheckTransaction(req, res);
 					break;
 
+				case "PerformTransaction":
+					HomeController.PerformTransaction(req, res);
+
 				default:
 					break;
 			}
@@ -119,5 +122,60 @@ module.exports = class HomeController {
 				reason: payment.dataValues.payment_reason,
 			},
 		});
+	}
+
+	static async PerformTransaction(req, res) {
+		const payment = await req.db.payments.findOne({
+			where: {
+				payment_id: req.body.params.id,
+			},
+			include: req.db.users,
+		});
+
+		if (!payment) {
+			res.error.transactionNotFound(res);
+			return;
+		}
+
+		if (payment.dataValues.payment_state == 2) {
+			res.json({
+				result: {
+					transaction: payment.dataValues.payment_id,
+					perform_time: new Date(
+						payment.dataValues.payment_perform_time
+					).getTime(),
+					state: payment.dataValues.payment_state,
+				},
+			});
+		}
+
+		if (payment.dataValues.payment_state == 1) {
+			let x = await req.db.users.update(
+				{
+					user_balance: +payment.dataValues.payment_amount,
+				},
+				{
+					where: {
+						user_id: payment.dataValues.user.dataValues.user_id,
+					},
+				}
+			);
+			await req.db.payments.update(
+				{
+					payment_state: 2,
+					payment_perform_time: Date.now(),
+				},
+				{
+					where: {
+						payment_id: payment.dataValues.payment_id,
+					},
+				}
+			);
+			res.json({
+				transaction: payment.dataValues.payment_id,
+				perform_time: Date.now(),
+				state: 2,
+			});
+		}
 	}
 };

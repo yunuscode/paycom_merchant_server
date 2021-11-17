@@ -16,11 +16,12 @@ async function pg() {
 
 		await Relations(db);
 
-		await sequelize.sync({ force: true });
+		await sequelize.sync({ force: false });
 
-		await db.users.create({
-			user_phone: "998901515064",
+		const users = await db.users.findAll({
+			raw: true,
 		});
+		console.log(users);
 
 		return db;
 	} catch (error) {

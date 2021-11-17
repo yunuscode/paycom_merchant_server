@@ -9,5 +9,10 @@ module.exports = async (sequelize, Sequelize) => {
 			type: Sequelize.STRING,
 			allowNull: false,
 		},
+		user_balance: {
+			type: Sequelize.INTEGER,
+			allowNull: false,
+			defaultValue: 0,
+		},
 	});
 };
