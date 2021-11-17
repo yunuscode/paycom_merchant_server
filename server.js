@@ -1,9 +1,9 @@
 require("dotenv").config();
 
-const { Router } = require("express");
 const express = require("express");
 const AuthMiddleware = require("./middlewares/AuthMiddleware");
 const db = require("./modules/pg");
+const Router = require("./routes");
 const app = express();
 
 app.listen(process.env.PORT || 80);
@@ -20,7 +20,7 @@ async function server() {
 		next();
 	});
 
-	app.use(Router);
+	app.use("/", Router);
 }
 
 server();
