@@ -155,20 +155,18 @@ module.exports = class HomeController {
 		}
 
 		if (payment.dataValues.payment_state == 1) {
-			let x = await req.db.users.update(
-				{
-					user_balance: +payment.dataValues.payment_amount,
+			let x = await req.db.users.increment("user_balance", {
+				by: payment.dataValues.payment_amount,
+				where: {
+					user_id: payment.dataValues.user.dataValues.user_id,
 				},
-				{
-					where: {
-						user_id: payment.dataValues.user.dataValues.user_id,
-					},
-				}
-			);
+			});
+			const date = Date.now();
+
 			await req.db.payments.update(
 				{
 					payment_state: 2,
-					payment_perform_time: Date.now(),
+					payment_perform_time: date,
 				},
 				{
 					where: {
@@ -177,9 +175,11 @@ module.exports = class HomeController {
 				}
 			);
 			res.json({
-				transaction: payment.dataValues.payment_id,
-				perform_time: Date.now(),
-				state: 2,
+				result: {
+					transaction: payment.dataValues.payment_id,
+					perform_time: date,
+					state: 2,
+				},
 			});
 		}
 	}
