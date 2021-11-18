@@ -197,12 +197,14 @@ module.exports = class HomeController {
 			return;
 		}
 
-		if (payment.dataValues.payment_state !== 2) {
+		if (payment.dataValues.payment_state == 1) {
+			const time = Date.now();
+
 			await req.db.payments.update(
 				{
 					payment_state: -1,
-					payment_cancel_time: Date.now(),
-					payment_reason: req.body.reason,
+					payment_cancel_time: time,
+					payment_reason: req.body.params.reason,
 				},
 				{
 					where: {
@@ -214,15 +216,13 @@ module.exports = class HomeController {
 			res.json({
 				result: {
 					state: -1,
-					cancel_time: Date.now(),
+					cancel_time: time,
 					transaction: payment.dataValues.payment_id,
 				},
 			});
 
 			return;
-		}
-
-		if (payment.dataValues.payment_state == 2) {
+		} else if (payment.dataValues.payment_state == 2) {
 			if (
 				payment.dataValues.user.dataValues.user_balance >
 				payment.dataValues.payment_amount
@@ -264,6 +264,16 @@ module.exports = class HomeController {
 				res.error.alreadyDone(res);
 				return;
 			}
+		} else {
+			res.json({
+				result: {
+					state: payment.dataValues.payment_state,
+					cancel_time: new Date(
+						payment.dataValues.payment_cancel_time
+					).getTime(),
+					transaction: payment.dataValues.payment_id,
+				},
+			});
 		}
 	}
 };

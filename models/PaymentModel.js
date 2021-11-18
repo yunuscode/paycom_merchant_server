@@ -22,7 +22,7 @@ module.exports = async (sequelize, Sequelize) => {
 			allowNull: true,
 		},
 		payment_reason: {
-			type: Sequelize.STRING(),
+			type: Sequelize.INTEGER,
 			allowNull: true,
 		},
 	});
